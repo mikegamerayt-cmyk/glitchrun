@@ -43,13 +43,13 @@ export default function Hub({ session }) {
   
 
 useEffect(() => {
-  cargarProgreso().then(data => { console.log('progreso:', data); setProgresoReal(data) })
+  cargarProgreso().then(data => setProgresoReal(data))
   cargarRanking().then(data => setRankingReal(data))
 }, [])
 
 useEffect(() => {
   const interval = setInterval(() => {
-    cargarProgreso().then(data => { console.log('progreso:', data); setProgresoReal(data) })
+    cargarProgreso().then(data => setProgresoReal(data))
     cargarRanking().then(data => setRankingReal(data))
   }, 5000)
   return () => clearInterval(interval)
