@@ -42,19 +42,36 @@ export default function Hub({ session }) {
   const username = session?.user?.user_metadata?.username || 'Agente'
   
 
-  useEffect(() => {
-    cargarProgreso().then(data => setProgresoReal(data))
-    cargarRanking().then(data => setRankingReal(data))
-  }, [])
+useEffect(() => {
+  cargarProgreso().then(data => { console.log('progreso:', data); setProgresoReal(data) })
+  cargarRanking().then(data => setRankingReal(data))
+}, [])
 
-  const getModuloData = (mod) => {
-    const p = progresoReal.find(pr => pr.mision_id === mod.id)
-    return {
-      ...mod,
-      progress: p ? 100 : mod.progress,
-      status: p ? 'completed' : mod.status,
-    }
+useEffect(() => {
+  const interval = setInterval(() => {
+    cargarProgreso().then(data => { console.log('progreso:', data); setProgresoReal(data) })
+    cargarRanking().then(data => setRankingReal(data))
+  }, 5000)
+  return () => clearInterval(interval)
+}, [])
+
+const getModuloData = (mod) => {
+  const completada = progresoReal.some(pr => pr.mision_id === mod.id)
+  const orden = [8, 1, 2, 3, 4, 5, 6, 7]
+  const posicion = orden.indexOf(mod.id)
+  const anterior = posicion > 0 ? orden[posicion - 1] : null
+  const anteriorCompletado = anterior === null || progresoReal.some(pr => pr.mision_id === anterior)
+
+  let status = 'locked'
+  if (completada) status = 'completed'
+  else if (anteriorCompletado) status = 'new'
+
+  return {
+    ...mod,
+    progress: completada ? 100 : 0,
+    status,
   }
+}
 
 const miPos = rankingReal.findIndex(r => r.id === session?.user?.id)
 const miPerfil = rankingReal.find(r => r.id === session?.user?.id)
@@ -162,7 +179,7 @@ const pageStyle = {
                   <button onClick={() => setActivePage('misiones')} style={{ background: 'none', border: 'none', color: C.cyan, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '1px' }}>VER TODAS</button>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-                  {modules.filter(m => m.status === 'active' || m.status === 'new').slice(0, 4).map((mod, i) => (
+                  {modules.map(m => getModuloData(m)).filter(m => m.status !== 'locked').slice(0, 4).map((mod, i) => (
                     <div key={mod.id} onClick={() => setActivePage('misiones')} style={{ background: C.card, border: `1px solid ${C.border}`, borderBottom: `3px solid ${missionColors[i]}`, borderRadius: '12px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s' }}>
                       <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: `${missionColors[i]}22`, border: `1px solid ${missionColors[i]}66`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
                         <ModuleIcon type={mod.icon} color={missionColors[i]} size={24} />
@@ -185,15 +202,21 @@ const pageStyle = {
             <div style={{ background: C.sidebar, borderLeft: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
               <div style={{ padding: '24px', borderBottom: `1px solid ${C.border}` }}>
                 <div style={{ fontSize: '12px', color: C.cyan, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '14px', fontWeight: 700 }}>Misión Actual</div>
-                <div style={{ fontSize: '20px', fontWeight: 700, color: 'white', marginBottom: '6px' }}>Ingeniería social</div>
-                <div style={{ fontSize: '14px', marginBottom: '16px' }}>Dificultad: <span style={{ color: C.cyan, fontWeight: 600 }}>Media</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '8px' }}>
-                  <span style={{ color: '#64748b' }}>Progreso</span>
-                  <span style={{ color: 'white', fontWeight: 600 }}>60%</span>
-                </div>
-                <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)' }}>
-                  <div style={{ height: '100%', width: '60%', borderRadius: '3px', background: `linear-gradient(to right, ${C.cyan}, ${C.violet})`, boxShadow: `0 0 10px ${C.cyan}88` }} />
-                </div>
+{(() => {
+  const misionActual = modules.find(m => !progresoReal.some(p => p.mision_id === m.id) && m.status !== 'locked') || modules[0]
+  const pct = progresoReal.some(p => p.mision_id === misionActual.id) ? 100 : misionActual.progress
+  return <>
+    <div style={{ fontSize: '20px', fontWeight: 700, color: 'white', marginBottom: '6px' }}>{misionActual.title}</div>
+    <div style={{ fontSize: '14px', marginBottom: '16px' }}>Dificultad: <span style={{ color: C.cyan, fontWeight: 600 }}>Media</span></div>
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '8px' }}>
+      <span style={{ color: '#64748b' }}>Progreso</span>
+      <span style={{ color: 'white', fontWeight: 600 }}>{pct}%</span>
+    </div>
+    <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)' }}>
+      <div style={{ height: '100%', width: `${pct}%`, borderRadius: '3px', background: `linear-gradient(to right, ${C.cyan}, ${C.violet})`, boxShadow: `0 0 10px ${C.cyan}88` }} />
+    </div>
+  </>
+})()}
               </div>
               <div style={{ padding: '24px', borderBottom: `1px solid ${C.border}` }}>
                 <div style={{ fontSize: '12px', color: C.cyan, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '14px', fontWeight: 700 }}>Puntuación</div>
@@ -246,8 +269,9 @@ const pageStyle = {
               <span style={{ color: C.cyan }}>▸</span> Módulos de entrenamiento
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-              {modules.map((mod, i) => {
-                const modData = getModuloData(mod)
+{modules.map((mod, i) => {
+  const modData = getModuloData(mod)
+  console.log(mod.id, modData.status, modData.progress)
                 return (
                   <div key={modData.id} onClick={() => modData.status !== 'locked' && setSelectedModule(selectedModule?.id === modData.id ? null : modData)}
                     style={{ background: C.card, border: `1px solid ${selectedModule?.id === modData.id ? missionColors[i % 4] + '88' : C.border}`, borderBottomWidth: '3px', borderBottomColor: missionColors[i % 4], borderRadius: '12px', padding: '20px', cursor: modData.status === 'locked' ? 'not-allowed' : 'pointer', opacity: modData.status === 'locked' ? 0.4 : 1, transition: 'all 0.2s' }}>

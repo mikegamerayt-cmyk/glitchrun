@@ -75,14 +75,14 @@ export default function Login({ onLogin }) {
           </div>
         )}
 
-        {/* CORREO */}
-        <div style={{ marginBottom: '16px' }}>
-          <div style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>Usuario</div>
-          <div style={{ position: 'relative' }}>
-            <MdPerson style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '22px' }} />
-            <input style={inp} type="email" placeholder="Ingresa tu usuario" value={email} onChange={e => setEmail(e.target.value)} />
-          </div>
-        </div>
+{/* CORREO */}
+<div style={{ marginBottom: '16px' }}>
+  <div style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '8px' }}>Correo electrónico</div>
+  <div style={{ position: 'relative' }}>
+    <MdPerson style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '22px' }} />
+    <input style={inp} type="email" placeholder="Ingresa tu correo" value={email} onChange={e => setEmail(e.target.value)} />
+  </div>
+</div>
 
         {/* CONTRASEÑA */}
         <div style={{ marginBottom: '18px' }}>
@@ -133,9 +133,15 @@ export default function Login({ onLogin }) {
               <span style={{ fontSize: '14px', color: '#64748b' }}>o</span>
               <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
             </div>
-            <button style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8', fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontFamily: 'inherit' }}>
-              <MdPerson size={22} color="#94a3b8" /> ENTRAR COMO INVITADO
-            </button>
+<button onClick={async () => {
+  setLoading(true)
+  const { error } = await supabase.auth.signInAnonymously()
+  if (error) setError('No se pudo entrar como invitado.')
+  else onLogin()
+  setLoading(false)
+}} style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8', fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontFamily: 'inherit' }}>
+  <MdPerson size={22} color="#94a3b8" /> ENTRAR COMO INVITADO
+</button>
           </>
         )}
       </div>
