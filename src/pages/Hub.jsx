@@ -581,12 +581,17 @@ const pageStyle = {
         <div style={{ background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: '14px', padding: '24px' }}>
           <div style={{ fontSize: '12px', color: '#f87171', letterSpacing: '2px', marginBottom: '14px', fontWeight: 700 }}>⚠ ZONA DE PELIGRO</div>
           <div style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '16px', lineHeight: '1.6' }}>
-            Cerrar sesión te desconectará de GlitchRun. Tu progreso está guardado en la nube.
+            Eliminar tu cuenta borrará todo tu progreso permanentemente. Esta acción no se puede deshacer.
           </div>
-          <button onClick={() => supabase.auth.signOut()}
-            style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid rgba(248,113,113,0.4)', background: 'rgba(248,113,113,0.1)', color: '#f87171', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-            🚪 Cerrar sesión
-          </button>
+<button onClick={async () => {
+  if (window.confirm('¿Estás seguro? Esta acción eliminará tu cuenta y todo tu progreso permanentemente.')) {
+    await supabase.rpc('delete_user')
+    await supabase.auth.signOut()
+  }
+}}
+  style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid rgba(248,113,113,0.4)', background: 'rgba(248,113,113,0.1)', color: '#f87171', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+  🗑️ Eliminar cuenta
+</button>
         </div>
       </div>
     </div>
